@@ -33,6 +33,9 @@ github.com/prometheus/common/model
 github.com/prometheus/procfs
 github.com/prometheus/procfs/internal/fs
 github.com/prometheus/procfs/internal/util
+# github.com/sirupsen/logrus v1.7.0
+## explicit
+github.com/sirupsen/logrus
 # github.com/spf13/cobra v1.1.1
 ## explicit
 # github.com/spf13/viper v1.7.1

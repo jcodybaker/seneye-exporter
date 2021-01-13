@@ -82,24 +82,32 @@ type Data struct {
 
 // SUDStatus describes the condition of the SUD and any alert conditions.
 type SUDStatus struct {
-	// Water is 1 if the SUD is submerged in water, false otherwise.
+	// Water is 1 if the SUD is submerged in water, 0 otherwise.
 	Water int `json:"W"`
-	// Temperature is 1 if the temperature is within limits.
+	// Temperature is 0 if the temperature is within limits, 1 otherwise.
 	Temperature int `json:"T"`
-	// PH is 0 if the pH is within limits.
+	// PH is 0 if the pH is within limits, 1 otherwise
 	PH int `json:"P"`
-	// NH3 is 0 if the free ammonia is within limits.
+	// NH3 is 0 if the free ammonia is within limits, 1 otherwise
 	NH3 int `json:"N"`
 	// Slide is 0 if the slide is correctly installed and unexpired, 1 otherwise.
 	Slide int `json:"S"`
-	// Kelvin is 0 if the Kelvin measurement is within limits.
+	// Kelvin is 0 if the Kelvin measurement is within limits, 1 otherwise.
 	Kelvin int `json:"K"`
 }
 
 // FromRequestBody parses the LDE body.
-func FromRequestBody(requestBody, secret []byte) (*LDE, error) {
+func FromRequestBody(requestBody []byte, secrets map[string][]byte) (*LDE, error) {
 	lde := &LDE{}
 	_, err := jwt.ParseWithClaims(string(fixEncoding(requestBody)), lde, func(token *jwt.Token) (interface{}, error) {
+		var secret []byte
+		var ok bool
+		if secret, ok = secrets[lde.SUD.ID]; !ok {
+			// Try to fallback to a default key.
+			if secret, ok = secrets[""]; !ok {
+				return nil, fmt.Errorf("Unknown Seneye device ID: %q", lde.SUD.ID)
+			}
+		}
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 		}

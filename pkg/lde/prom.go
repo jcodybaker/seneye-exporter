@@ -1,10 +1,6 @@
 package lde
 
 import (
-	"fmt"
-	"io/ioutil"
-	"net/http"
-	"sync"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -46,22 +42,22 @@ var (
 
 	statusWaterDesc = prometheus.NewDesc(
 		"seneye_status_water",
-		"Water is 1 if the SUD is submerged in water, false otherwise.",
+		"Water is 1 if the SUD is submerged in water, 0 otherwise.",
 		labels, nil,
 	)
 	statusTemperatureDesc = prometheus.NewDesc(
 		"seneye_status_temperature",
-		"Temperature is 1 if the temperature is within limits.",
+		"Temperature is 0 if the temperature is within limits, 1 otherwise.",
 		labels, nil,
 	)
 	statusPhDesc = prometheus.NewDesc(
 		"seneye_status_ph",
-		"PH is 0 if the pH is within limits.",
+		"PH is 0 if the pH is within limits, 1 otherwise.",
 		labels, nil,
 	)
 	statusAmmoniaDesc = prometheus.NewDesc(
 		"seneye_status_ammonia",
-		"Ammonia (NH3) is 0 if the free ammonia is within limits..",
+		"Ammonia (NH3) is 0 if the free ammonia is within limits, 1 otherwise.",
 		labels, nil,
 	)
 	statusSlideDesc = prometheus.NewDesc(
@@ -71,24 +67,20 @@ var (
 	)
 	statusKelvinDesc = prometheus.NewDesc(
 		"seneye_status_kelvin",
-		"Kelvin is 0 if the Kelvin measurement is within limits.",
+		"Kelvin is 0 if the Kelvin measurement is within limits, 1 otherwise.",
 		labels, nil,
 	)
 )
 
-// LDEServer is an HTTP server which implements the Seneye LDE protocol.
-type LDEServer struct {
-	lastLDEs map[string]*LDE
-	lock     sync.Mutex
-}
-
 // Describe implements prometheus.Collector.
-func (l *LDEServer) Describe(ch chan<- *prometheus.Desc) {
+func (l *Server) Describe(ch chan<- *prometheus.Desc) {
 	prometheus.DescribeByCollect(l, ch)
 }
 
 // Collect implements prometheus.Collector.
-func (l *LDEServer) Collect(ch chan<- prometheus.Metric) {
+func (l *Server) Collect(ch chan<- prometheus.Metric) {
+	l.lock.Lock()
+	defer l.lock.Unlock()
 	for _, l := range l.lastLDEs {
 		labels := []string{l.SUD.ID, l.SUD.Name, l.SUD.Type.String()}
 		t := time.Unix(l.SUD.Timestamp, 0)
@@ -166,23 +158,4 @@ func (l *LDEServer) Collect(ch chan<- prometheus.Metric) {
 			labels...,
 		))
 	}
-}
-
-// ServeHTTP implements an http.Handler for the LDE server.
-func (l *LDEServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	msg, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		fmt.Println(err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	lde, err := FromRequestBody(msg, []byte("8hcWfWRs"))
-	if err != nil {
-		fmt.Println("Parsing Body: " + err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	l.lock.Lock()
-	defer l.lock.Unlock()
-	l.lastLDEs[lde.SUD.ID] = lde
 }
