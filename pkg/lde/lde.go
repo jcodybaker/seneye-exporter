@@ -55,7 +55,7 @@ type SUD struct {
 	// Type describes the seneye device model type.
 	Type SUDType `json:"type"`
 	// Timestamp describes when the sample was taken (UNIX timestamp)
-	Timestamp int `json:"TS"`
+	Timestamp int64 `json:"TS"`
 	// Data holds the readings from the SUD.
 	Data Data `json:"data"`
 }
