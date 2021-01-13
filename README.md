@@ -1,1 +1,1 @@
-# seneye-push-exporter
+# seneye-exporter

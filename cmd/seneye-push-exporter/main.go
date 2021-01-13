@@ -3,7 +3,7 @@ package main
 import (
 	"net/http"
 
-	"github.com/jcodybaker/seneye-push-exporter/pkg/lde"
+	"github.com/jcodybaker/seneye-exporter/pkg/lde"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"

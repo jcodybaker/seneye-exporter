@@ -1,4 +1,4 @@
-module github.com/jcodybaker/seneye-push-exporter
+module github.com/jcodybaker/seneye-exporter
 
 go 1.15
 
