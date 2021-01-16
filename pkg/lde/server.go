@@ -19,7 +19,6 @@ type Server struct {
 // ServeHTTP implements an http.Handler for the LDE server.
 func (l *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ll := hlog.FromRequest(r)
-	ll.Debug().Msg("HTTP LDE request received")
 	for k, values := range r.Header {
 		for _, v := range values {
 			ll.Trace().Str("http_header_name", k).Str("http_header_value", v).Msg("processing HTTP LDE request header")
@@ -58,6 +57,7 @@ func (l *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Int("sud_status_slide", lde.SUD.Data.Status.Slide).
 		Int("sud_status_kelvin", lde.SUD.Data.Status.Kelvin).
 		Msg("LDE event received")
+	w.WriteHeader(http.StatusNoContent)
 }
 
 // ServerOption describes a func which implements the functional option pattern for the LDE Server.
