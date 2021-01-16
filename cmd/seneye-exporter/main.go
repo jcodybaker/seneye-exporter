@@ -40,6 +40,18 @@ func init() {
 	rootCmd.PersistentFlags().String("log-format", "text", `log format: "json", "text"`)
 	viper.BindPFlag("log-format", rootCmd.PersistentFlags().Lookup("log-format"))
 	viper.SetDefault("log-format", "text")
+	rootCmd.PersistentFlags().String("log-level", zerolog.DebugLevel.String(),
+		fmt.Sprintf("log level: %q %q %q \n%q %q %q %q",
+			zerolog.TraceLevel.String(),
+			zerolog.DebugLevel.String(),
+			zerolog.InfoLevel.String(),
+			zerolog.WarnLevel.String(),
+			zerolog.ErrorLevel.String(),
+			zerolog.FatalLevel.String(),
+			zerolog.PanicLevel.String(),
+		))
+	viper.BindPFlag("log-level", rootCmd.PersistentFlags().Lookup("log-level"))
+	viper.SetDefault("log-level", zerolog.DebugLevel.String())
 
 	rootCmd.Flags().Uint16("prom-port", 9090, "Port for prometheus metrics server")
 	viper.BindPFlag("prom-port", rootCmd.Flags().Lookup("prom-port"))
@@ -171,6 +183,12 @@ func configureLog(cmd *cobra.Command, args []string) {
 	default:
 		log.Fatal().Str("log_format", logFormat).Msg("unknown log format")
 	}
+	levelS := viper.GetString("log-level")
+	level, err := zerolog.ParseLevel(levelS)
+	if err != nil {
+		log.Fatal().Str("log_level", levelS).Msg("unknown log level")
+	}
+	zerolog.SetGlobalLevel(level)
 }
 
 func parseSecrets(cmd *cobra.Command) map[string][]byte {
