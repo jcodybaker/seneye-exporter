@@ -34,7 +34,7 @@ func (l *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	lde, err := FromRequestBody(msg, l.secrets)
 	if err != nil {
 		ll.Error().Err(err).Msg("parsing LDE body")
-		w.WriteHeader(http.StatusInternalServerError)
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	l.lock.Lock()

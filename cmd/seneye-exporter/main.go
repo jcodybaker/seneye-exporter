@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"golang.org/x/sync/errgroup"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -15,12 +16,14 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/hlog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 var (
+	ctx     context.Context
 	cfgFile string
 
 	rootCmd = &cobra.Command{
@@ -32,6 +35,7 @@ var (
 )
 
 func init() {
+	ctx = context.Background()
 	cobra.OnInitialize(initConfig)
 	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
 	viper.AutomaticEnv()
@@ -103,14 +107,18 @@ func rootExecute(cmd *cobra.Command, args []string) {
 	ldeMux.Handle("/lde", ldeServer)
 	promMux.Handle("/metrics", promhttp.HandlerFor(promRegistry, promhttp.HandlerOpts{}))
 
-	eg, ctx := errgroup.WithContext(context.Background())
+	eg, runCtx := errgroup.WithContext(ctx)
 	var ldeHTTP, promHTTP *http.Server
 	eg.Go(func() error {
+		l := log.With().Uint("server_port", ldePort).Logger()
 		ldeHTTP = &http.Server{
 			Addr:    fmt.Sprintf(":%d", ldePort),
-			Handler: ldeMux,
+			Handler: logHandler(ldeMux),
+			BaseContext: func(net.Listener) context.Context {
+				return l.WithContext(ctx)
+			},
 		}
-		log.Info().Uint("lde-port", ldePort).Msg("starting lde http server")
+		l.Info().Msg("starting lde http server")
 		err := ldeHTTP.ListenAndServe()
 		if err != nil && err != http.ErrServerClosed {
 			log.Error().Err(err).Uint("lde-port", ldePort).Msg("failed to start LDE http server")
@@ -121,11 +129,15 @@ func rootExecute(cmd *cobra.Command, args []string) {
 
 	if promPort != ldePort {
 		eg.Go(func() error {
+			l := log.With().Uint("server_port", ldePort).Logger()
 			promHTTP = &http.Server{
 				Addr:    fmt.Sprintf(":%d", promPort),
-				Handler: promMux,
+				Handler: logHandler(promMux),
+				BaseContext: func(net.Listener) context.Context {
+					return l.WithContext(ctx)
+				},
 			}
-			log.Info().Uint("prom-port", promPort).Msg("starting prometheus http server")
+			l.Info().Msg("starting prometheus http server")
 			err := promHTTP.ListenAndServe()
 			if err != nil && err != http.ErrServerClosed {
 				log.Error().Err(err).Uint("prom-port", promPort).Msg("failed to start prometheus http server")
@@ -140,13 +152,13 @@ func rootExecute(cmd *cobra.Command, args []string) {
 	select {
 	case <-sigint:
 		log.Info().Msg("Got SIGINT; shutting down")
-	case <-ctx.Done():
+	case <-runCtx.Done():
 		// One of the listeners failed, but these log their own error.
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
-	shutdownEG, ctx := errgroup.WithContext(ctx)
+	var shutdownEG errgroup.Group
 	shutdownEG.Go(func() error {
 		return ldeHTTP.Shutdown(ctx)
 	})
@@ -155,7 +167,7 @@ func rootExecute(cmd *cobra.Command, args []string) {
 			return promHTTP.Shutdown(ctx)
 		})
 	}
-	eg.Wait()
+	eg.Wait() // We've now told all servers to shutdown, wait for their goroutines to exit.
 	if err := shutdownEG.Wait(); err != nil {
 		log.Warn().Err(err).Msg("shutting down HTTP servers")
 		os.Exit(1)
@@ -189,6 +201,7 @@ func configureLog(cmd *cobra.Command, args []string) {
 		log.Fatal().Str("log_level", levelS).Msg("unknown log level")
 	}
 	zerolog.SetGlobalLevel(level)
+	ctx = log.Logger.WithContext(ctx)
 }
 
 func parseSecrets(cmd *cobra.Command) map[string][]byte {
@@ -217,4 +230,26 @@ func parseSecrets(cmd *cobra.Command) map[string][]byte {
 		out[splitSecret[0]] = []byte(splitSecret[1])
 	}
 	return out
+}
+
+func logHandler(h http.Handler) http.Handler {
+	h = hlog.NewHandler(log.Logger)(h)
+	h = hlog.RemoteAddrHandler("ip")(h)
+	h = hlog.UserAgentHandler("user_agent")(h)
+	h = hlog.AccessHandler(func(r *http.Request, status, size int, duration time.Duration) {
+		l := log.Ctx(r.Context()).With().
+			Int("http_status", status).
+			Int("response_bytes", size).
+			Dur("duration", duration).
+			Str("http_method", r.Method).
+			Str("request_uri", r.RequestURI).Logger()
+		if status < 400 {
+			l.Debug().Msg("request completed")
+		} else {
+			l.Warn().Msg("error processing request")
+		}
+
+	})(h)
+
+	return h
 }
