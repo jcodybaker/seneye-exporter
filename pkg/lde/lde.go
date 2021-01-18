@@ -72,12 +72,12 @@ type Data struct {
 	NH3 float64 `json:"N"`
 	// Kelvin is the numeric Correlated Color Temperature value of the colour temperature in degrees Kelvin.
 	// https://www.seneye.com/kelvin
-	Kelvin int `json:"K"`
+	Kelvin float64 `json:"K"`
 	// Lux describes the intensity of the light observed in the tank. ( https://en.wikipedia.org/wiki/Lux )
-	Lux int `json:"L"`
+	Lux float64 `json:"L"`
 	// PAR describes the photosynthetic active radiation is a measurement of light power between 400nm and 700nm.
 	// ( https://answers.seneye.com/index.php?title=en/Aquarium_help/What_is_PAR_%26_PUR_%3F )
-	PAR int `json:"A"`
+	PAR float64 `json:"A"`
 }
 
 // SUDStatus describes the condition of the SUD and any alert conditions.

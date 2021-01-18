@@ -47,9 +47,9 @@ func (l *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Float64("sud_data_temperature", lde.SUD.Data.Temperature).
 		Float64("sud_data_ph", lde.SUD.Data.PH).
 		Float64("sud_data_nh3", lde.SUD.Data.NH3).
-		Int("sud_data_kelvin", lde.SUD.Data.Kelvin).
-		Int("sud_data_lux", lde.SUD.Data.Lux).
-		Int("sud_data_par", lde.SUD.Data.PAR).
+		Float64("sud_data_kelvin", lde.SUD.Data.Kelvin).
+		Float64("sud_data_lux", lde.SUD.Data.Lux).
+		Float64("sud_data_par", lde.SUD.Data.PAR).
 		Int("sud_status_water", lde.SUD.Data.Status.Water).
 		Int("sud_status_temperature", lde.SUD.Data.Status.Temperature).
 		Int("sud_status_ph", lde.SUD.Data.Status.PH).
