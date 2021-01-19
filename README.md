@@ -1,6 +1,6 @@
 # seneye-exporter
 
-seneye-exporter provides a webserver which listens for measurement pushes from the [Seneye Connect App (SCA)](https://sca.seneye.com/) or [Seneye Web Server (SWS)](https://www.seneye.com/store/seneye-web-server.html) and publishes the results as [prometheus](https://prometheus.io/) metrics. seneye-exporter implements the LDE (Local Data Exchange) protocol. [Prometheus](https://prometheus.io/) is an open-source timeseries database which can collect and store metrics. Using this tool in conjunction with prometheus allows for long-term storage as well as advanced alerting and querying of data collected from the [Seneye USB device (SUD)](https://answers.seneye.com/en/Seneye_Products/seneye_USB_device). Prometheus can be combined with [Grafana](https://grafana.com/) or similar tooling for data visualization.
+seneye-exporter provides a webserver which listens for measurement pushes from the [Seneye Connect App (SCA)](https://sca.seneye.com/) or [Seneye Web Server (SWS)](https://www.seneye.com/store/seneye-web-server.html) and publishes the results as [prometheus](https://prometheus.io/) metrics. seneye-exporter implements the LDE (Local Data Exchange) protocol. [Prometheus](https://prometheus.io/) is an open-source time-series database which can collect and store metrics. Using this tool in conjunction with prometheus allows for long-term storage as well as advanced alerting and querying of data collected from the [Seneye USB device (SUD)](https://answers.seneye.com/en/Seneye_Products/seneye_USB_device). Prometheus can be combined with [Grafana](https://grafana.com/) or similar tooling for data visualization.
 
 
 ## Grafana Dashboard
@@ -57,4 +57,4 @@ Please use [github pull-requests](https://github.com/jcodybaker/seneye-exporter/
 This code is Copyright [Cody Baker](mailto:cody@codybaker.com) 2021 under the [MIT open-source license](LICENSE). 
 
 ## Legal
-This software is NOT authorized or endorsed by "seneye ltd", the maker of Seneye devices. "Seneye" is UK registered [trademark owned by "seneye ltd"](https://trademarks.ipo.gov.uk/ipo-tmcase/page/Results/1/UK00909344425).
+This software is NOT authorized or endorsed by "seneye ltd", the maker of Seneye devices. "Seneye" is UK registered [trademark owned by "seneye ltd"](https://trademarks.ipo.gov.uk/ipo-tmcase/page/Results/1/UK00909344425). Please consider purchasing their devices and accessories at [https://www.seneye.com/store](https://www.seneye.com/store).
