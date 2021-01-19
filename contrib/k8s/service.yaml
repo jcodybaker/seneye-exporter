@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: seneye-exporter
+  name: seneye-exporter
+  namespace: seneye-exporter
+spec:
+  ports:
+  - name: lde
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  - name: prom
+    port: 9090
+    protocol: TCP
+    targetPort: 9090
+  selector:
+    app: seneye-exporter
+  sessionAffinity: None
+  type: ClusterIP

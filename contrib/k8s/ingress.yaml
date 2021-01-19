@@ -1,0 +1,14 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: seneye-exporter
+  namespace: seneye-exporter
+spec:
+  rules:
+  - host: seneye-exporter.example.com
+    http:
+      paths:
+      - backend:
+          serviceName: seneye-exporter
+          servicePort: 8080
+        path: /
